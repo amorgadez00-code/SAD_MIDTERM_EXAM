@@ -31,4 +31,7 @@ This is an examination-sized minimum viable system.
 Official Registrar integration, payment processing, SMS, machine learning,
 and a full appeal workflow are not included.
 
+## Testing
+Execute TC01–TC10 and record actual outcomes.
+Include screenshots and document any known defects.
 
