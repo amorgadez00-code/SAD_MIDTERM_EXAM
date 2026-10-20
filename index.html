@@ -1,1 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Student Scholarship Monitoring System</title>
+
+    <style>
+        :root {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #182230;
+            background: #f4f7fb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        header {
+            background: #173b67;
+            color: white;
+            padding: 18px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            font-size: 22px;
+            margin: 0;
+        }
+
+        header p {
+            margin: 5px 0 0;
+            color: #d7e6f7;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 18px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #dfe6ef;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 16px #173b670b;
+        }
+
+        h2 {
+            font-size: 19px;
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .muted {
+            color: #617084;
+            font-size: 14px;
+        }
+
+        .small {
+            font-size: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(190px, 1fr));
+            gap: 12px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .stat {
+            background: white;
+            border: 1px solid #dfe6ef;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .stat strong {
+            font-size: 27px;
+            display: block;
+            color: #173b67;
+        }
+
+        .stat span {
+            color: #617084;
+            font-size: 13px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font: inherit;
+            background: white;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .field {
+            margin-bottom: 12px;
+        }
+
+        button {
+            border: 0;
+            background: #1769aa;
+            color: white;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            filter: brightness(0.95);
+        }
+
+        button.secondary {
+            background: #e8eef5;
+            color: #20334a;
+        }
+
+        button.danger {
+            background: #a52d36;
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .notice {
+            padding: 12px 14px;
+            border-radius: 9px;
+            margin-bottom: 14px;
+            display: none;
+            white-space: pre-wrap;
+        }
+
+        .notice.ok {
+            display: block;
+            background: #e5f7ec;
+            color: #14532d;
+        }
+
+        .notice.err {
+            display: block;
+            background: #fff0f0;
+            color: #8b1e2d;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .topline {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tablewrap {
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            border-bottom: 1px solid #e5eaf0;
+            padding: 10px 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f7f9fc;
+            color: #44556b;
+        }
+
+        .pill {
+            display: inline-block;
+            border-radius: 99px;
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #edf2f7;
+            text-transform: capitalize;
+        }
+
+        .pill.good {
+            background: #dff6e7;
+            color: #176337;
+        }
+
+        .pill.warn {
+            background: #fff0d2;
+            color: #805300;
+        }
+
+        .pill.bad {
+            background: #ffe4e6;
+            color: #9f1239;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                padding: 0 10px;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            header {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>Student Scholarship Monitoring</h1>
+        <p>Academic Compliance and Renewal Workspace</p>
+    </div>
+
+    <div class="actions">
+        <span id="who" class="small"></span>
+        <button id="logout" class="secondary hidden">
+            Sign out
+        </button>
+    </div>
+</header>
+
+<main>
+
+    <div id="notice" class="notice"></div>
+
+    <!-- AUTHENTICATION -->
+    <section id="authPanel" class="panel">
+
+        <h2>Scholarship System Login</h2>
+
+        <p class="muted">
+            Sign in to your account or register as a Scholar.
+        </p>
+
+        <div class="grid">
+
+            <div>
+                <h3>Sign in</h3>
+
+                <form id="loginForm">
+
+                    <div class="field">
+                        <label>Email</label>
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Password</label>
+                        <input
+                            name="password"
+                            type="password"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit">
+                        Sign in
+                    </button>
+
+                </form>
+            </div>
+
+            <div>
+                <h3>Create Scholar Account</h3>
+
+                <form id="signupForm">
+
+                    <div class="field">
+                        <label>Full Name</label>
+                        <input
+                            name="full_name"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Student ID</label>
+                        <input
+                            name="student_id"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Program and Year</label>
+                        <input
+                            name="program_year"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Email</label>
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Password</label>
+                        <input
+                            name="password"
+                            type="password"
+                            minlength="6"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit">
+                        Create Account
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+
+        <p class="muted small">
+            New accounts are Scholars by default.
+            Staff roles must be configured securely by the administrator.
+        </p>
+
+    </section>
+
+    <!-- APPLICATION -->
+    <section id="appPanel" class="hidden">
+
+        <!-- DASHBOARD COUNTERS -->
+        <div class="stats">
+
+            <div class="stat">
+                <strong id="statAssigned">0</strong>
+                <span>Assigned Scholars</span>
+            </div>
+
+            <div class="stat">
+                <strong id="statPending">0</strong>
+                <span>Pending Verification</span>
+            </div>
+
+            <div class="stat">
+                <strong id="statCompliant">0</strong>
+                <span>Compliant</span>
+            </div>
+
+            <div class="stat">
+                <strong id="statDeficient">0</strong>
+                <span>With Deficiency</span>
+            </div>
+
+        </div>
+
+        <!-- SCHOLAR VIEW -->
+        <section id="scholarView" class="panel hidden">
+
+            <h2>My Semester Submissions</h2>
+
+            <form id="submissionForm">
+
+                <div class="grid">
+
+                    <div class="field">
+                        <label>Academic Year</label>
+                        <input
+                            name="academic_year"
+                            value="2026-2027"
+                            required
+                            pattern="\d{4}-\d{4}"
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Semester</label>
+
+                        <select name="semester" required>
+                            <option value="1">
+                                Semester 1
+                            </option>
+
+                            <option value="2">
+                                Semester 2
+                            </option>
+
+                            <option value="summer">
+                                Summer
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>GWA (1.00–5.00)</label>
+
+                        <input
+                            name="gwa"
+                            type="number"
+                            min="1"
+                            max="5"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Enrolled Units</label>
+
+                        <input
+                            name="enrolled_units"
+                            type="number"
+                            min="0"
+                            step="1"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Failed Subjects</label>
+
+                        <input
+                            name="failed_count"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="0"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Incomplete Grades</label>
+
+                        <input
+                            name="incomplete_count"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="0"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Dropped Subjects</label>
+
+                        <input
+                            name="dropped_count"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value="0"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Grade-Document Reference</label>
+
+                        <input
+                            name="evidence_reference"
+                            placeholder="Synthetic document reference"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <button type="submit">
+                    Submit Semester Summary
+                </button>
+
+            </form>
+
+            <p class="muted small">
+                Submit a document reference for this examination.
+                The system does not change official Registrar grades.
+            </p>
+
+            <div class="tablewrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year / Semester</th>
+                            <th>Academic Summary</th>
+                            <th>Evidence</th>
+                            <th>Compliance</th>
+                            <th>Renewal</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="myRows"></tbody>
+                </table>
+
+            </div>
+
+        </section>
+
+        <!-- STAFF VIEW -->
+        <section id="staffView" class="panel hidden">
+
+            <div class="topline">
+                <h2>Staff Dashboard</h2>
+
+                <button
+                    id="refreshBtn"
+                    class="secondary"
+                >
+                    Refresh Data
+                </button>
+            </div>
+
+            <div class="grid">
+
+                <div class="field">
+                    <label>Search by Student ID or Name</label>
+
+                    <input
+                        id="searchInput"
+                        placeholder="Search scholars or submissions"
+                    >
+                </div>
+
+                <div class="field">
+                    <label>Filter by Program</label>
+
+                    <select id="programFilter">
+                        <option value="">All Programs</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Filter by Compliance</label>
+
+                    <select id="complianceFilter">
+                        <option value="">All Results</option>
+                        <option value="not_evaluated">
+                            Not Evaluated
+                        </option>
+                        <option value="compliant">
+                            Compliant
+                        </option>
+                        <option value="with_deficiency">
+                            With Deficiency
+                        </option>
+                    </select>
+                </div>
+
+            </div>
+
+            <h3>Scholar Accounts and Policy Assignment</h3>
+
+            <p class="muted small">
+                Create a Scholar account first. After the scholar signs in,
+                their profile can be assigned a scholarship policy.
+            </p>
+
+            <div class="tablewrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Scholar</th>
+                            <th>Student ID</th>
+                            <th>Program / Year</th>
+                            <th>Assigned Policy</th>
+                            <th>Change Assignment</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="profileRows"></tbody>
+                </table>
+
+            </div>
+
+            <h3>Semester Submissions</h3>
+
+            <div class="tablewrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Scholar</th>
+                            <th>Year / Semester</th>
+                            <th>Summary</th>
+                            <th>Evidence</th>
+                            <th>Compliance</th>
+                            <th>Renewal</th>
+                            <th>Staff Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="staffRows"></tbody>
+                </table>
+
+            </div>
+
+            <h3>Audit History</h3>
+
+            <div class="tablewrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Submission</th>
+                            <th>Actor</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="auditRows"></tbody>
+                </table>
+
+            </div>
+
+        </section>
+
+    </section>
+
+</main>
+
+<!-- SUPABASE JAVASCRIPT CLIENT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+/*
+    STEP 1:
+    Replace these two placeholders with your own Supabase values.
+
+    Use only your project's publishable/anon key.
+    NEVER place the service_role key in browser code.
+*/
+
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+
+const SUPABASE_ANON_KEY =
+    "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+
+const configured =
+    !SUPABASE_URL.includes("YOUR_") &&
+    !SUPABASE_ANON_KEY.includes("YOUR_");
+
+const db = configured
+    ? window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    )
+    : null;
+
+
+/* APPLICATION STATE */
+
+const $ = id => document.getElementById(id);
+
+let currentUser = null;
+let currentProfile = null;
+
+let programs = [];
+let profiles = [];
+let assignments = [];
+let submissions = [];
+let audit = [];
+
+
+/* MESSAGE DISPLAY */
+
+function notify(message, type = "ok") {
+    $("notice").textContent = message;
+    $("notice").className = "notice " + type;
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+function clearNotice() {
+    $("notice").className = "notice";
+    $("notice").textContent = "";
+}
+
+
+/* SAFE HTML OUTPUT */
+
+function esc(value) {
+    return String(value ?? "").replace(
+        /[&<>"']/g,
+        character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[character]
+    );
+}
+
+function pill(value) {
+    let cssClass = "";
+
+    if (
+        ["verified", "compliant", "approved"].includes(value)
+    ) {
+        cssClass = "good";
+    } else if (
+        ["pending", "not_evaluated", "not_decided"].includes(value)
+    ) {
+        cssClass = "warn";
+    } else if (
+        ["returned", "with_deficiency", "held"].includes(value)
+    ) {
+        cssClass = "bad";
+    }
+
+    return `
+        <span class="pill ${cssClass}">
+            ${esc(String(value || "").replaceAll("_", " "))}
+        </span>
+    `;
+}
+
+function formObj(form) {
+    return Object.fromEntries(
+        new FormData(form).entries()
+    );
+}
+
+function fmtDate(value) {
+    return value
+        ? new Date(value).toLocaleString()
+        : "—";
+}
+
+
+/* SUPABASE REQUEST HELPER */
+
+async function call(query) {
+    const { data, error } = await query;
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
+
+
+/* DISPLAY CORRECT DASHBOARD */
+
+function showApp() {
+    $("authPanel").classList.add("hidden");
+    $("appPanel").classList.remove("hidden");
+    $("logout").classList.remove("hidden");
+
+    $("who").textContent =
+        (currentProfile.full_name || currentUser.email) +
+        " · " +
+        currentProfile.role;
+
+    const isStaff = currentProfile.role === "staff";
+
+    $("staffView").classList.toggle(
+        "hidden",
+        !isStaff
+    );
+
+    $("scholarView").classList.toggle(
+        "hidden",
+        isStaff
+    );
+}
+
+
+/* LOAD OR CREATE PROFILE */
+
+async function loadProfile() {
+    const { data, error } = await db.auth.getUser();
+
+    if (error) {
+        throw error;
+    }
+
+    currentUser = data.user;
+
+    if (!currentUser) {
+        currentProfile = null;
+        return;
+    }
+
+    let profile = await call(
+        db
+            .from("profiles")
+            .select("*")
+            .eq("id", currentUser.id)
+            .maybeSingle()
+    );
+
+    /*
+       New registrations create their own Scholar profile.
+       Staff promotion is performed securely during setup.
+    */
+
+    if (!profile) {
+        const metadata = currentUser.user_metadata || {};
+
+        profile = await call(
+            db
+                .from("profiles")
+                .insert({
+                    id: currentUser.id,
+                    full_name:
+                        metadata.full_name ||
+                        currentUser.email,
+                    student_id:
+                        metadata.student_id || null,
+                    program_year:
+                        metadata.program_year || "",
+                    role: "scholar"
+                })
+                .select()
+                .single()
+        );
+    }
+
+    currentProfile = profile;
+}
+
+
+/* LOAD DATA FROM DATABASE */
+
+async function loadAll() {
+    programs = await call(
+        db
+            .from("scholarship_programs")
+            .select("*")
+            .order("name")
+    );
+
+    assignments = await call(
+        db
+            .from("scholar_assignments")
+            .select("*")
+    );
+
+    submissions = await call(
+        db
+            .from("semester_submissions")
+            .select("*")
+            .order("submitted_at", { ascending: false })
+    );
+
+    if (currentProfile.role === "staff") {
+        profiles = await call(
+            db
+                .from("profiles")
+                .select("*")
+                .order("full_name")
+        );
+
+        audit = await call(
+            db
+                .from("audit_history")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(100)
+        );
+    } else {
+        profiles = [currentProfile];
+
+        audit = await call(
+            db
+                .from("audit_history")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(100)
+        );
+    }
+
+    renderAll();
+}
+
+
+/* FIND ASSIGNED POLICY */
+
+function assignmentFor(scholarId) {
+    return assignments.find(
+        assignment => assignment.scholar_id === scholarId
+    );
+}
+
+function programForScholar(scholarId) {
+    const assignment = assignmentFor(scholarId);
+
+    return programs.find(
+        program => program.id === assignment?.program_id
+    );
+}
+
+function reasons(submission) {
+    return Array.isArray(submission.deficiency_reasons)
+        ? submission.deficiency_reasons
+        : [];
+}
+
+
+/* DASHBOARD COUNTS */
+
+function renderStats() {
+    const mySubmissions =
+        currentProfile.role === "staff"
+            ? submissions
+            : submissions.filter(
+                submission =>
+                    submission.scholar_id === currentUser.id
+            );
+
+    $("statAssigned").textContent =
+        currentProfile.role === "staff"
+            ? assignments.length
+            : (assignmentFor(currentUser.id) ? 1 : 0);
+
+    $("statPending").textContent =
+        mySubmissions.filter(
+            submission =>
+                submission.evidence_status === "pending"
+        ).length;
+
+    $("statCompliant").textContent =
+        mySubmissions.filter(
+            submission =>
+                submission.compliance_result === "compliant"
+        ).length;
+
+    $("statDeficient").textContent =
+        mySubmissions.filter(
+            submission =>
+                submission.compliance_result === "with_deficiency"
+        ).length;
+}
+
+
+/* RENDER ALL TABLES */
+
+function renderAll() {
+    renderStats();
+    renderPrograms();
+
+    if (currentProfile.role === "staff") {
+        renderProfiles();
+        renderStaffRows();
+        renderAudit();
+    } else {
+        renderMyRows();
+    }
+}
+
+
+/* PROGRAM FILTER */
+
+function renderPrograms() {
+    const previousValue = $("programFilter").value;
+
+    $("programFilter").innerHTML =
+        '<option value="">All Programs</option>' +
+        programs.map(program => `
+            <option value="${program.id}">
+                ${esc(program.name)}
+            </option>
+        `).join("");
+
+    $("programFilter").value = previousValue;
+}
+
+
+/* SCHOLAR'S SUBMISSION TABLE */
+
+function renderMyRows() {
+    const mine = submissions.filter(
+        submission =>
+            submission.scholar_id === currentUser.id
+    );
+
+    $("myRows").innerHTML = mine.map(submission => `
+        <tr>
+            <td>
+                ${esc(submission.academic_year)}
+                / ${esc(submission.semester)}
+            </td>
+
+            <td>
+                GWA ${esc(submission.gwa)};
+                units ${esc(submission.enrolled_units)};
+                failed ${esc(submission.failed_count)};
+                INC ${esc(submission.incomplete_count)};
+                dropped ${esc(submission.dropped_count)}
+            </td>
+
+            <td>
+                ${pill(submission.evidence_status)}
+                <br>
+                <span class="small">
+                    ${esc(
+                        submission.verification_reason ||
+                        submission.evidence_reference
+                    )}
+                </span>
+            </td>
+
+            <td>
+                ${pill(submission.compliance_result)}
+                <br>
+                <span class="small">
+                    ${esc(
+                        reasons(submission).join("; ") || "—"
+                    )}
+                </span>
+            </td>
+
+            <td>
+                ${pill(submission.renewal_decision)}
+                <br>
+                ${esc(submission.decision_note || "")}
+            </td>
+
+            <td>
+                ${
+                    submission.evidence_status === "returned"
+                    ? `
+                        <button
+                            class="secondary"
+                            onclick="correctSubmission('${submission.id}')"
+                        >
+                            Correct & Resubmit
+                        </button>
+                    `
+                    : "—"
+                }
+            </td>
+        </tr>
+    `).join("") ||
+    '<tr><td colspan="6">No submissions yet.</td></tr>';
+}
+
+
+/* STAFF SCHOLAR TABLE */
+
+function renderProfiles() {
+    $("profileRows").innerHTML = profiles
+        .filter(profile => profile.role === "scholar")
+        .map(profile => {
+            const assignment = assignmentFor(profile.id);
+
+            const program = programs.find(
+                item => item.id === assignment?.program_id
+            );
+
+            return `
+                <tr>
+                    <td>${esc(profile.full_name)}</td>
+
+                    <td>${esc(profile.student_id || "—")}</td>
+
+                    <td>${esc(profile.program_year || "—")}</td>
+
+                    <td>${esc(program?.name || "Not assigned")}</td>
+
+                    <td>
+                        <select id="assign-${profile.id}">
+                            ${programs.map(item => `
+                                <option
+                                    value="${item.id}"
+                                    ${item.id === assignment?.program_id
+                                        ? "selected"
+                                        : ""}
+                                >
+                                    ${esc(item.name)}
+                                </option>
+                            `).join("")}
+                        </select>
+
+                        <button onclick="assignProgram('${profile.id}')">
+                            Save
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join("") ||
+        '<tr><td colspan="5">No Scholar accounts found.</td></tr>';
+}
+
+
+/* STAFF SUBMISSION TABLE AND FILTERING */
+
+function renderStaffRows() {
+    const search =
+        $("searchInput").value.toLowerCase();
+
+    const programFilter =
+        $("programFilter").value;
+
+    const complianceFilter =
+        $("complianceFilter").value;
+
+    const filtered = submissions.filter(submission => {
+        const profile = profiles.find(
+            item => item.id === submission.scholar_id
+        ) || {};
+
+        const program = programForScholar(
+            submission.scholar_id
+        );
+
+        const searchMatches =
+            !search ||
+            `${profile.full_name || ""} ${profile.student_id || ""}`
+                .toLowerCase()
+                .includes(search);
+
+        const programMatches =
+            !programFilter ||
+            program?.id === programFilter;
+
+        const complianceMatches =
+            !complianceFilter ||
+            submission.compliance_result === complianceFilter;
+
+        return (
+            searchMatches &&
+            programMatches &&
+            complianceMatches
+        );
+    });
+
+    $("staffRows").innerHTML = filtered.map(submission => {
+        const profile = profiles.find(
+            item => item.id === submission.scholar_id
+        ) || {};
+
+        const program = programForScholar(
+            submission.scholar_id
+        );
+
+        return `
+            <tr>
+                <td>
+                    ${esc(profile.full_name)}
+                    <br>
+                    <span class="small">
+                        ${esc(profile.student_id || "")}
+                    </span>
+                    <br>
+                    ${esc(program?.name || "Unassigned")}
+                </td>
+
+                <td>
+                    ${esc(submission.academic_year)}
+                    / ${esc(submission.semester)}
+                    <br>
+                    <span class="small">
+                        ${fmtDate(submission.submitted_at)}
+                    </span>
+                </td>
+
+                <td>
+                    GWA ${esc(submission.gwa)};
+                    units ${esc(submission.enrolled_units)};
+                    failed ${esc(submission.failed_count)};
+                    INC ${esc(submission.incomplete_count)};
+                    dropped ${esc(submission.dropped_count)}
+                </td>
+
+                <td>
+                    ${esc(submission.evidence_reference)}
+                    <br>
+                    ${pill(submission.evidence_status)}
+                    <br>
+                    ${esc(submission.verification_reason || "")}
+                </td>
+
+                <td>
+                    ${pill(submission.compliance_result)}
+                    <br>
+                    <span class="small">
+                        ${esc(reasons(submission).join("; "))}
+                    </span>
+                </td>
+
+                <td>
+                    ${pill(submission.renewal_decision)}
+                    <br>
+                    ${esc(submission.decision_note || "")}
+                </td>
+
+                <td>
+                    <div class="actions">
+                        ${
+                            submission.evidence_status !== "verified"
+                            ? `
+                                <button
+                                    onclick="verify('${submission.id}', 'verified')"
+                                >
+                                    Verify
+                                </button>
+                            `
+                            : ""
+                        }
+
+                        ${
+                            submission.evidence_status !== "returned"
+                            ? `
+                                <button
+                                    class="secondary"
+                                    onclick="returnRecord('${submission.id}')"
+                                >
+                                    Return
+                                </button>
+                            `
+                            : ""
+                        }
+
+                        <button
+                            class="secondary"
+                            onclick="evaluateRecord('${submission.id}')"
+                        >
+                            Evaluate
+                        </button>
+
+                        <button
+                            class="secondary"
+                            onclick="decide('${submission.id}', 'approved')"
+                        >
+                            Approve
+                        </button>
+
+                        <button
+                            class="danger"
+                            onclick="decide('${submission.id}', 'held')"
+                        >
+                            Hold
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("") ||
+    '<tr><td colspan="7">No matching submissions.</td></tr>';
+}
+
+
+/* AUDIT HISTORY TABLE */
+
+function renderAudit() {
+    const names = Object.fromEntries(
+        profiles.map(profile => [
+            profile.id,
+            profile.full_name
+        ])
+    );
+
+    $("auditRows").innerHTML = audit.map(entry => `
+        <tr>
+            <td>${fmtDate(entry.created_at)}</td>
+
+            <td>${esc(entry.submission_id)}</td>
+
+            <td>${esc(names[entry.actor_id] || entry.actor_id)}</td>
+
+            <td>${esc(entry.action)}</td>
+
+            <td>
+                <code>${esc(JSON.stringify(entry.details))}</code>
+            </td>
+        </tr>
+    `).join("") ||
+    '<tr><td colspan="5">No audit entries yet.</td></tr>';
+}
+
+
+/* LOGIN */
+
+$("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    try {
+        if (!configured) {
+            throw new Error(
+                "Configure the Supabase URL and key in index.html first."
+            );
+        }
+
+        const form = formObj(event.target);
+
+        const { error } = await db.auth.signInWithPassword({
+            email: form.email,
+            password: form.password
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        await start();
+
+        notify("Signed in successfully.");
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+});
+
+
+/* SCHOLAR REGISTRATION */
+
+$("signupForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    try {
+        if (!configured) {
+            throw new Error(
+                "Configure your Supabase URL and key first."
+            );
+        }
+
+        const form = formObj(event.target);
+
+        const { data, error } = await db.auth.signUp({
+            email: form.email,
+            password: form.password,
+
+            options: {
+                data: {
+                    full_name: form.full_name,
+                    student_id: form.student_id,
+                    program_year: form.program_year
+                }
+            }
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        if (data.session) {
+            await start();
+
+            notify(
+                "Account created. Ask staff to assign your scholarship policy."
+            );
+        } else {
+            notify(
+                "Account created. Check your email for confirmation, then sign in."
+            );
+        }
+
+        event.target.reset();
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+});
+
+
+/* SIGN OUT */
+
+$("logout").addEventListener("click", async () => {
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+        notify(error.message, "err");
+        return;
+    }
+
+    currentUser = null;
+    currentProfile = null;
+
+    $("appPanel").classList.add("hidden");
+    $("authPanel").classList.remove("hidden");
+    $("logout").classList.add("hidden");
+
+    $("who").textContent = "";
+
+    notify("Signed out.");
+});
+
+
+/* SCHOLAR SUBMITS ACADEMIC SUMMARY */
+
+$("submissionForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    try {
+        if (!assignmentFor(currentUser.id)) {
+            throw new Error(
+                "No scholarship policy assigned. Contact Scholarship Staff."
+            );
+        }
+
+        const form = formObj(event.target);
+
+        const number = key => Number(form[key]);
+
+        const gwa = number("gwa");
+
+        if (
+            !Number.isFinite(gwa) ||
+            gwa < 1 ||
+            gwa > 5
+        ) {
+            throw new Error(
+                "GWA must be from 1.00 through 5.00."
+            );
+        }
+
+        const fields = [
+            "enrolled_units",
+            "failed
