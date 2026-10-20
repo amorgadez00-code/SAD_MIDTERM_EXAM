@@ -696,11 +696,18 @@
 <script>
 "use strict";
 
+/*
+    STEP 1:
+    Replace these two placeholders with your own Supabase values.
 
-const SUPABASE_URL = "https://ufclzjtaukjqwztlhhps.supabase.co";
+    Use only your project's publishable/anon key.
+    NEVER place the service_role key in browser code.
+*/
+
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmY2x6anRhdWtqcXd6dGxoaHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0NDM4MDMsImV4cCI6MjEwODAxOTgwM30.i65IoImUMY9jmhmzRgDJ5PuS5k0mifryH5k4omDO65Q";
+    "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
 
 const configured =
     !SUPABASE_URL.includes("YOUR_") &&
@@ -1479,4 +1486,565 @@ $("submissionForm").addEventListener("submit", async event => {
 
         const fields = [
             "enrolled_units",
-            "failed
+            "failed_count",
+            "incomplete_count",
+            "dropped_count"
+        ];
+
+        for (const field of fields) {
+            const value = number(field);
+
+            if (!Number.isInteger(value) || value < 0) {
+                throw new Error(
+                    "Units and counts must be nonnegative integers."
+                );
+            }
+        }
+
+        await call(
+            db
+                .from("semester_submissions")
+                .insert({
+                    scholar_id: currentUser.id,
+                    academic_year: form.academic_year,
+                    semester: form.semester,
+                    gwa: gwa,
+                    enrolled_units: number("enrolled_units"),
+                    failed_count: number("failed_count"),
+                    incomplete_count: number("incomplete_count"),
+                    dropped_count: number("dropped_count"),
+                    evidence_reference:
+                        form.evidence_reference.trim()
+                })
+        );
+
+        event.target.reset();
+
+        event.target.elements.academic_year.value = "2026-2027";
+
+        await loadAll();
+
+        notify(
+            "Semester summary submitted. Status: Pending verification."
+        );
+
+    } catch (error) {
+        if (
+            error.message &&
+            error.message.includes("duplicate key")
+        ) {
+            notify(
+                "A submission already exists for this academic year and semester.",
+                "err"
+            );
+        } else {
+            notify(error.message, "err");
+        }
+    }
+});
+
+
+/* SCHOLAR CORRECTS A RETURNED SUBMISSION */
+
+window.correctSubmission = async function (id) {
+    const submission = submissions.find(
+        item => item.id === id
+    );
+
+    if (!submission) {
+        return;
+    }
+
+    const gwa = prompt(
+        "Correct GWA (1.00–5.00):",
+        submission.gwa
+    );
+
+    if (gwa === null) return;
+
+    const units = prompt(
+        "Correct enrolled units:",
+        submission.enrolled_units
+    );
+
+    if (units === null) return;
+
+    const failed = prompt(
+        "Correct failed subjects:",
+        submission.failed_count
+    );
+
+    if (failed === null) return;
+
+    const incomplete = prompt(
+        "Correct incomplete grades:",
+        submission.incomplete_count
+    );
+
+    if (incomplete === null) return;
+
+    const dropped = prompt(
+        "Correct dropped subjects:",
+        submission.dropped_count
+    );
+
+    if (dropped === null) return;
+
+    const reference = prompt(
+        "Correct grade-document reference:",
+        submission.evidence_reference
+    );
+
+    if (reference === null) return;
+
+    try {
+        const g = Number(gwa);
+        const u = Number(units);
+        const f = Number(failed);
+        const i = Number(incomplete);
+        const d = Number(dropped);
+
+        if (
+            !Number.isFinite(g) ||
+            g < 1 ||
+            g > 5 ||
+            ![u, f, i, d].every(
+                value =>
+                    Number.isInteger(value) &&
+                    value >= 0
+            ) ||
+            !reference.trim()
+        ) {
+            throw new Error(
+                "Invalid values. GWA must be 1–5; units and counts must be nonnegative integers."
+            );
+        }
+
+        await call(
+            db
+                .from("semester_submissions")
+                .update({
+                    gwa: g,
+                    enrolled_units: u,
+                    failed_count: f,
+                    incomplete_count: i,
+                    dropped_count: d,
+                    evidence_reference: reference.trim(),
+
+                    evidence_status: "pending",
+                    verification_reason: null,
+                    verified_by: null,
+                    verified_at: null,
+
+                    compliance_result: "not_evaluated",
+                    deficiency_reasons: [],
+                    evaluated_by: null,
+                    evaluated_at: null,
+
+                    renewal_decision: "not_decided",
+                    decision_note: null,
+                    decided_by: null,
+                    decided_at: null
+                })
+                .eq("id", id)
+        );
+
+        await loadAll();
+
+        notify(
+            "Correction saved. Status is Pending verification."
+        );
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+};
+
+
+/* STAFF ASSIGNS A SCHOLARSHIP POLICY */
+
+window.assignProgram = async function (scholarId) {
+    try {
+        const programId = $(
+            "assign-" + scholarId
+        ).value;
+
+        const existing = assignmentFor(scholarId);
+
+        if (existing) {
+            await call(
+                db
+                    .from("scholar_assignments")
+                    .update({
+                        program_id: programId,
+                        assigned_by: currentUser.id
+                    })
+                    .eq("id", existing.id)
+            );
+        } else {
+            await call(
+                db
+                    .from("scholar_assignments")
+                    .insert({
+                        scholar_id: scholarId,
+                        program_id: programId,
+                        assigned_by: currentUser.id
+                    })
+            );
+        }
+
+        await loadAll();
+
+        notify("Scholarship policy assignment saved.");
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+};
+
+
+/* STAFF VERIFIES OR RETURNS EVIDENCE */
+
+window.verify = async function (id, status) {
+    try {
+        let reason = null;
+
+        if (status === "returned") {
+            reason = prompt(
+                "Reason for returning the evidence (required):"
+            );
+
+            if (reason === null) {
+                return;
+            }
+
+            if (!reason.trim()) {
+                throw new Error(
+                    "A return reason is required."
+                );
+            }
+        }
+
+        const update = {
+            evidence_status: status,
+            verification_reason: reason,
+            verified_by:
+                status === "verified"
+                    ? currentUser.id
+                    : null,
+            verified_at:
+                status === "verified"
+                    ? new Date().toISOString()
+                    : null
+        };
+
+        if (status === "verified") {
+            update.verification_reason =
+                "Evidence verified by staff.";
+        }
+
+        await call(
+            db
+                .from("semester_submissions")
+                .update(update)
+                .eq("id", id)
+        );
+
+        await loadAll();
+
+        notify("Evidence status updated.");
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+};
+
+window.returnRecord = function (id) {
+    return window.verify(id, "returned");
+};
+
+
+/* STAFF EVALUATES COMPLIANCE */
+
+window.evaluateRecord = async function (id) {
+    try {
+        const submission = submissions.find(
+            item => item.id === id
+        );
+
+        if (!submission) {
+            throw new Error("Submission not found.");
+        }
+
+        if (submission.evidence_status !== "verified") {
+            throw new Error(
+                "Evaluation blocked: evidence must be verified first."
+            );
+        }
+
+        const program = programForScholar(
+            submission.scholar_id
+        );
+
+        if (!program) {
+            throw new Error(
+                "Assign a scholarship policy before evaluation."
+            );
+        }
+
+        const deficiencies = [];
+
+        /*
+           Compare against the persisted policy record.
+           Do not duplicate the two policies as separate
+           hardcoded evaluation branches.
+        */
+
+        if (
+            Number(submission.gwa) >
+            Number(program.max_gwa)
+        ) {
+            deficiencies.push(
+                `GWA ${submission.gwa} exceeds maximum ${program.max_gwa}.`
+            );
+        }
+
+        if (
+            submission.enrolled_units <
+            program.min_units
+        ) {
+            deficiencies.push(
+                `Enrolled units ${submission.enrolled_units} are below minimum ${program.min_units}.`
+            );
+        }
+
+        if (
+            submission.failed_count >
+            program.max_failed
+        ) {
+            deficiencies.push(
+                `Failed subjects ${submission.failed_count} exceed allowed ${program.max_failed}.`
+            );
+        }
+
+        if (
+            submission.incomplete_count >
+            program.max_incomplete
+        ) {
+            deficiencies.push(
+                `Incomplete grades ${submission.incomplete_count} exceed allowed ${program.max_incomplete}.`
+            );
+        }
+
+        if (
+            submission.dropped_count >
+            program.max_dropped
+        ) {
+            deficiencies.push(
+                `Dropped subjects ${submission.dropped_count} exceed allowed ${program.max_dropped}.`
+            );
+        }
+
+        /*
+           Exact deadline is on time.
+           Only a timestamp later than the deadline is late.
+        */
+
+        if (
+            new Date(submission.submitted_at).getTime() >
+            new Date(program.deadline).getTime()
+        ) {
+            deficiencies.push(
+                `Submission was late. Deadline: ${fmtDate(program.deadline)}.`
+            );
+        }
+
+        const result = deficiencies.length
+            ? "with_deficiency"
+            : "compliant";
+
+        await call(
+            db
+                .from("semester_submissions")
+                .update({
+                    compliance_result: result,
+                    deficiency_reasons: deficiencies,
+                    evaluated_by: currentUser.id,
+                    evaluated_at: new Date().toISOString(),
+
+                    renewal_decision: "not_decided",
+                    decision_note: null,
+                    decided_by: null,
+                    decided_at: null
+                })
+                .eq("id", id)
+        );
+
+        await loadAll();
+
+        if (result === "compliant") {
+            notify("Evaluation complete: Compliant.");
+        } else {
+            notify(
+                "Evaluation complete: With Deficiency.\n" +
+                deficiencies.join("\n"),
+                "err"
+            );
+        }
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+};
+
+
+/* STAFF RECORDS RENEWAL DECISION */
+
+window.decide = async function (id, decision) {
+    try {
+        const submission = submissions.find(
+            item => item.id === id
+        );
+
+        if (!submission) {
+            throw new Error("Submission not found.");
+        }
+
+        if (
+            submission.evidence_status !== "verified" ||
+            submission.compliance_result === "not_evaluated"
+        ) {
+            throw new Error(
+                "Renewal decision blocked until evidence is verified and compliance is evaluated."
+            );
+        }
+
+        if (
+            decision === "approved" &&
+            submission.compliance_result !== "compliant"
+        ) {
+            throw new Error(
+                "A deficient submission cannot be approved. Choose Hold."
+            );
+        }
+
+        const note = prompt(
+            decision === "approved"
+                ? "Decision note (optional):"
+                : "Reason for holding renewal (required):",
+            ""
+        );
+
+        if (note === null) {
+            return;
+        }
+
+        if (
+            decision === "held" &&
+            !note.trim()
+        ) {
+            throw new Error(
+                "A reason is required when holding renewal."
+            );
+        }
+
+        await call(
+            db
+                .from("semester_submissions")
+                .update({
+                    renewal_decision: decision,
+                    decision_note: note.trim() || null,
+                    decided_by: currentUser.id,
+                    decided_at: new Date().toISOString()
+                })
+                .eq("id", id)
+        );
+
+        await loadAll();
+
+        notify("Renewal decision saved.");
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+};
+
+
+/* SEARCH, FILTER, AND REFRESH */
+
+$("refreshBtn").addEventListener(
+    "click",
+    async () => {
+        try {
+            clearNotice();
+
+            await loadAll();
+
+            notify("Data refreshed.");
+
+        } catch (error) {
+            notify(error.message, "err");
+        }
+    }
+);
+
+$("searchInput").addEventListener(
+    "input",
+    renderStaffRows
+);
+
+$("programFilter").addEventListener(
+    "change",
+    renderStaffRows
+);
+
+$("complianceFilter").addEventListener(
+    "change",
+    renderStaffRows
+);
+
+
+/* START APPLICATION */
+
+async function start() {
+    await loadProfile();
+
+    if (!currentUser || !currentProfile) {
+        return;
+    }
+
+    showApp();
+
+    await loadAll();
+}
+
+(async function initialize() {
+    if (!configured) {
+        notify(
+            "Setup required: replace the Supabase URL and key in index.html.",
+            "err"
+        );
+
+        return;
+    }
+
+    try {
+        const { data, error } =
+            await db.auth.getSession();
+
+        if (error) {
+            throw error;
+        }
+
+        if (data.session) {
+            await start();
+        }
+
+    } catch (error) {
+        notify(error.message, "err");
+    }
+})();
+</script>
+
+</body>
+</html>
