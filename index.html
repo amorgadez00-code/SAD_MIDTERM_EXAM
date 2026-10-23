@@ -704,12 +704,12 @@ const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmY2x6anRhdWtqcXd6dGxoaHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0NDM4MDMsImV4cCI6MjEwODAxOTgwM30.i65IoImUMY9jmhmzRgDJ5PuS5k0mifryH5k4omDO65Q";
 
 
-const configured =
+onst configured =
     SUPABASE_URL.startsWith("https://") &&
     SUPABASE_URL.includes(".supabase.co") &&
-    !SUPABASE_URL.includes("https://ufclzjtaukjqwztlhhps.supabase.co") &&
+    !SUPABASE_URL.includes("YOUR_PROJECT") &&
     SUPABASE_ANON_KEY.length > 50 &&
-    !SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmY2x6anRhdWtqcXd6dGxoaHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0NDM4MDMsImV4cCI6MjEwODAxOTgwM30.i65IoImUMY9jmhmzRgDJ5PuS5k0mifryH5k4omDO65Q");
+    !SUPABASE_ANON_KEY.includes("YOUR_");
 
 const db = configured
     ? window.supabase.createClient(
