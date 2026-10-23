@@ -293,101 +293,37 @@
         <h2>Scholarship System Login</h2>
 
         <p class="muted">
-            Sign in to your account or register as a Scholar.
+            Sign in to your account.
         </p>
 
-        <div class="grid">
+        <form id="loginForm">
 
-            <div>
-                <h3>Sign in</h3>
-
-                <form id="loginForm">
-
-                    <div class="field">
-                        <label>Email</label>
-                        <input
-                            name="email"
-                            type="email"
-                            required
-                        >
-                    </div>
-
-                    <div class="field">
-                        <label>Password</label>
-                        <input
-                            name="password"
-                            type="password"
-                            required
-                        >
-                    </div>
-
-                    <button type="submit">
-                        Sign in
-                    </button>
-
-                </form>
+            <div class="field">
+                <label>Email</label>
+                <input
+                    name="email"
+                    type="email"
+                    required
+                >
             </div>
 
-            <div>
-                <h3>Create Scholar Account</h3>
-
-                <form id="signupForm">
-
-                    <div class="field">
-                        <label>Full Name</label>
-                        <input
-                            name="full_name"
-                            required
-                        >
-                    </div>
-
-                    <div class="field">
-                        <label>Student ID</label>
-                        <input
-                            name="student_id"
-                            required
-                        >
-                    </div>
-
-                    <div class="field">
-                        <label>Program and Year</label>
-                        <input
-                            name="program_year"
-                            required
-                        >
-                    </div>
-
-                    <div class="field">
-                        <label>Email</label>
-                        <input
-                            name="email"
-                            type="email"
-                            required
-                        >
-                    </div>
-
-                    <div class="field">
-                        <label>Password</label>
-                        <input
-                            name="password"
-                            type="password"
-                            minlength="6"
-                            required
-                        >
-                    </div>
-
-                    <button type="submit">
-                        Create Account
-                    </button>
-
-                </form>
+            <div class="field">
+                <label>Password</label>
+                <input
+                    name="password"
+                    type="password"
+                    required
+                >
             </div>
 
-        </div>
+            <button type="submit">
+                Sign in
+            </button>
+
+        </form>
 
         <p class="muted small">
-            New accounts are Scholars by default.
-            Staff roles must be configured securely by the administrator.
+            Staff can create Scholar accounts from the Staff Dashboard.
         </p>
 
     </section>
@@ -616,6 +552,67 @@
                 </div>
 
             </div>
+
+            <h3>Create Scholar Account</h3>
+
+            <p class="muted small">
+                Create a new Scholar account. The scholar can then sign in and you can assign their scholarship policy.
+            </p>
+
+            <form id="staffSignupForm">
+
+                <div class="grid">
+
+                    <div class="field">
+                        <label>Full Name</label>
+                        <input
+                            name="full_name"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Student ID</label>
+                        <input
+                            name="student_id"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Program and Year</label>
+                        <input
+                            name="program_year"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Email</label>
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label>Password</label>
+                        <input
+                            name="password"
+                            type="password"
+                            minlength="6"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <button type="submit">
+                    Create Scholar Account
+                </button>
+
+            </form>
 
             <h3>Scholar Accounts and Policy Assignment</h3>
 
@@ -873,7 +870,7 @@ async function loadProfile() {
     );
 
     /*
-       New registrations create their own Scholar profile.
+       Staff creates Scholar accounts.
        Staff promotion is performed securely during setup.
     */
 
@@ -1386,15 +1383,15 @@ $("loginForm").addEventListener("submit", async event => {
 });
 
 
-/* SCHOLAR REGISTRATION */
+/* STAFF CREATES SCHOLAR ACCOUNT */
 
-$("signupForm").addEventListener("submit", async event => {
+$("staffSignupForm").addEventListener("submit", async event => {
     event.preventDefault();
 
     try {
         if (!configured) {
             throw new Error(
-                "Configure your Supabase URL and key first."
+                "Configure the Supabase URL and key first."
             );
         }
 
@@ -1417,19 +1414,19 @@ $("signupForm").addEventListener("submit", async event => {
             throw error;
         }
 
-        if (data.session) {
-            await start();
+        event.target.reset();
 
+        await loadAll();
+
+        if (data.session) {
             notify(
-                "Account created. Ask staff to assign your scholarship policy."
+                "Scholar account created. Assign their scholarship policy below."
             );
         } else {
             notify(
-                "Account created. Check your email for confirmation, then sign in."
+                "Scholar account created. Check their email for confirmation, then assign their scholarship policy."
             );
         }
-
-        event.target.reset();
 
     } catch (error) {
         notify(error.message, "err");
